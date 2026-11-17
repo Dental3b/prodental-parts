@@ -2,6 +2,7 @@ import html
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
@@ -50,6 +51,19 @@ def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
 
 
+def days_out(picked: str, status: str, today) -> str:
+    if str(status).strip().upper() == "RETURNED":
+        return "-"
+    text = str(picked).strip()
+    if text in {"", "-"}:
+        return "-"
+    try:
+        start = datetime.strptime(text, "%b %d, %Y").date()
+    except ValueError:
+        return "-"
+    return str((today - start).days)
+
+
 def table_html(frame: pd.DataFrame) -> str:
     columns = list(frame.columns)
     head = "".join(f'<th style="{TH}">{html.escape(col)}</th>' for col in columns)
@@ -71,6 +85,14 @@ def table_html(frame: pd.DataFrame) -> str:
 
 frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
 frame = frame.apply(lambda col: col.str.strip().replace("", "-"))
+today = datetime.now(ZoneInfo("America/New_York")).date()
+frame["DAYS"] = [
+    days_out(picked, status, today)
+    for picked, status in zip(frame["PICKED UP"], frame["STATUS"])
+]
+columns = [col for col in frame.columns if col != "DAYS"]
+columns.insert(columns.index("PICKED UP") + 1, "DAYS")
+frame = frame[columns]
 
 st.html(
     """

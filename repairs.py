@@ -72,6 +72,17 @@ def table_html(frame: pd.DataFrame) -> str:
 frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
 frame = frame.apply(lambda col: col.str.strip().replace("", "-"))
 
+st.html(
+    """
+    <style>
+    header[data-testid="stHeader"] { height: 0; min-height: 0; background: transparent; }
+    .block-container,
+    [data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
+    [data-testid="stHeading"],
+    [data-testid="stHeading"] :is(h1, h2, h3) { margin-top: 0; }
+    </style>
+    """
+)
 st.subheader("Pro Dental Repair – Equipment in Repair")
 query = st.text_input("Search", placeholder="Filter rows").strip()
 if query:

@@ -37,7 +37,7 @@ TH = (
 )
 TD = (
     "text-align:center;border:1px solid #000;padding:6px 8px;"
-    "vertical-align:middle;color:#111;background:{bg}"
+    "vertical-align:middle;color:#111;background:{bg};font-weight:700"
 )
 
 st.set_page_config(
@@ -126,6 +126,7 @@ st.html(
     """
     <style>
     header[data-testid="stHeader"] { height: 0; min-height: 0; background: transparent; }
+    table th, table td, table th *, table td * { font-weight: 700; }
     .stMain,
     [data-testid="stMain"],
     .block-container,

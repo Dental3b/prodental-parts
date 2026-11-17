@@ -139,7 +139,7 @@ def summary_html(frame: pd.DataFrame) -> str:
 
 
 def shop_order(frame: pd.DataFrame) -> pd.DataFrame:
-    """Open jobs oldest-first, undated after those, returned jobs last."""
+    """Open jobs newest-first, undated after those, returned jobs last."""
     ranked = frame.copy()
     ranked["_pickup"] = ranked["PICKED UP"].map(pickup_date)
     returned = ranked["STATUS"].str.strip().str.upper().eq("RETURNED")
@@ -152,7 +152,7 @@ def shop_order(frame: pd.DataFrame) -> pd.DataFrame:
         return pd.concat([dated, undated])
 
     ordered_rows = pd.concat([
-        ordered(ranked.loc[~returned], oldest_first=True),
+        ordered(ranked.loc[~returned], oldest_first=False),
         ordered(ranked.loc[returned], oldest_first=False),
     ])
     return ordered_rows.drop(columns="_pickup")

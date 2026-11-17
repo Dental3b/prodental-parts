@@ -119,9 +119,6 @@ def table_html(frame: pd.DataFrame) -> str:
     )
 
 
-frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
-frame = frame[COLUMNS].apply(lambda col: col.str.strip().replace("", "-"))
-
 st.html(
     """
     <style>
@@ -144,15 +141,23 @@ st.html(
     </style>
     """
 )
-st.subheader("Pro Dental Repair – Parts")
-query = st.text_input("Search", placeholder="Filter rows").strip()
-if query:
-    needle = query.lower()
-    frame = frame[
-        frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
-    ]
-delivered = frame["STATUS"].str.strip().str.upper().eq("DELIVERED")
-frame = pd.concat([frame.loc[~delivered], frame.loc[delivered]])
 
-st.html(table_html(frame))
-st.caption(f"parts.csv last updated {last_updated(CSV)}")
+
+@st.fragment(run_every=300)
+def show_parts():
+    frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
+    frame = frame[COLUMNS].apply(lambda col: col.str.strip().replace("", "-"))
+    st.subheader("Pro Dental Repair – Parts")
+    query = st.text_input("Search", placeholder="Filter rows").strip()
+    if query:
+        needle = query.lower()
+        frame = frame[
+            frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
+        ]
+    delivered = frame["STATUS"].str.strip().str.upper().eq("DELIVERED")
+    frame = pd.concat([frame.loc[~delivered], frame.loc[delivered]])
+    st.html(table_html(frame))
+    st.caption(f"parts.csv last updated {last_updated(CSV)}")
+
+
+show_parts()

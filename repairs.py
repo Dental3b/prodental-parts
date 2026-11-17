@@ -16,17 +16,21 @@ STATUS_BG = {
     "RETURNED": "#22c55e",
 }
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-LOCATION_BG = {
-    "SHOP": "#e5e7eb",
-    "SENT": "#fed7aa",
-}
 TH = (
     "background:#000;color:#fff;font-weight:700;text-align:center;"
-    "border:1px solid #000;padding:6px 8px"
+    "border:1px solid #000;padding:2px 4px;line-height:1.15;font-size:12px"
 )
 TD = (
-    "text-align:center;border:1px solid #000;padding:6px 8px;"
-    "vertical-align:middle;color:#111;background:{bg}"
+    "text-align:center;border:1px solid #000;padding:2px 4px;line-height:1.15;"
+    "vertical-align:middle;color:#111;background:{bg};font-size:12px"
+)
+SUM_TH = (
+    "background:#fff;color:#111;font-weight:700;text-align:center;"
+    "border:1px solid #ccc;padding:0 4px;line-height:1.1;font-size:10px"
+)
+SUM_TD = (
+    "text-align:center;background:#fff;color:#111;"
+    "border:1px solid #ccc;padding:0 4px;line-height:1.1;font-size:10px"
 )
 
 st.set_page_config(
@@ -56,17 +60,6 @@ def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
 
 
-def location_html(value: str) -> str:
-    label = str(value).strip()
-    bg = LOCATION_BG.get(label.upper())
-    if not bg:
-        return html.escape(label)
-    return (
-        f'<span style="display:inline-block;background:{bg};color:#111;'
-        f'padding:1px 8px;border-radius:999px;font-weight:600">{html.escape(label)}</span>'
-    )
-
-
 def picked_label(picked: str, status: str, today) -> str:
     text = str(picked).strip()
     if text in {"", "-"}:
@@ -78,7 +71,9 @@ def picked_label(picked: str, status: str, today) -> str:
     short = html.escape(f"{MONTHS[start.month - 1]} {start.day}")
     if str(status).strip().upper() == "RETURNED":
         return short
-    return f"{short}<br>{(today - start).days} días"
+    days = (today - start).days
+    unit = "day" if abs(days) == 1 else "days"
+    return f"{short}<br>{days} {unit}"
 
 
 def pickup_date(value: str):
@@ -104,27 +99,27 @@ def summary_html(frame: pd.DataFrame) -> str:
         return int((tech.eq(name) & loc.eq(place)).sum())
 
     head = "".join(
-        f'<th style="{TH}">{html.escape(col)}</th>' for col in ["", *TECHS, "TOTAL"]
+        f'<th style="{SUM_TH}">{html.escape(col)}</th>' for col in ["", *TECHS, "TOTAL"]
     )
     body = []
     by_tech = {name: 0 for name in TECHS}
     for place in SUMMARY_COLS:
-        cells = [f'<td style="{TD.format(bg=LOCATION_BG[place])}"><b>{place}</b></td>']
+        cells = [f'<td style="{SUM_TD}">{place}</td>']
         row_total = 0
         for name in TECHS:
             n = count(name, place)
             by_tech[name] += n
             row_total += n
-            cells.append(f'<td style="{TD.format(bg=LOCATION_BG[place])}">{n}</td>')
-        cells.append(f'<td style="{TD.format(bg=LOCATION_BG[place])}"><b>{row_total}</b></td>')
+            cells.append(f'<td style="{SUM_TD}">{n}</td>')
+        cells.append(f'<td style="{SUM_TD}">{row_total}</td>')
         body.append("<tr>" + "".join(cells) + "</tr>")
     grand = sum(by_tech.values())
-    foot = [f'<td style="{TD.format(bg="#f3f4f6")}"><b>TOTAL</b></td>']
-    foot += [f'<td style="{TD.format(bg="#f3f4f6")}"><b>{by_tech[name]}</b></td>' for name in TECHS]
-    foot.append(f'<td style="{TD.format(bg="#f3f4f6")}"><b>{grand}</b></td>')
+    foot = [f'<td style="{SUM_TD}"><b>TOTAL</b></td>']
+    foot += [f'<td style="{SUM_TD}"><b>{by_tech[name]}</b></td>' for name in TECHS]
+    foot.append(f'<td style="{SUM_TD}"><b>{grand}</b></td>')
     body.append("<tr>" + "".join(foot) + "</tr>")
     table = (
-        '<table style="border-collapse:collapse;width:auto;font-size:13px;margin:0">'
+        '<table style="border-collapse:collapse;width:auto;margin:0">'
         f"<thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
     return f'<div style="display:flex;justify-content:flex-end">{table}</div>'
@@ -163,14 +158,12 @@ def table_html(frame: pd.DataFrame) -> str:
                 bg = STATUS_BG.get(str(rec[col]).strip().upper(), "#ffffff")
             if col == "PICKED UP":
                 body = picked_label(rec[col], rec.get("STATUS", ""), today)
-            elif col == "LOCATION":
-                body = location_html(rec[col])
             else:
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             cells.append(f'<td style="{TD.format(bg=bg)}">{body}</td>')
         rows.append("<tr>" + "".join(cells) + "</tr>")
     return (
-        '<table style="border-collapse:collapse;width:100%;font-size:14px">'
+        '<table style="border-collapse:collapse;width:100%;font-size:12px">'
         f"<thead><tr>{head}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
     )
 
@@ -183,13 +176,21 @@ st.html(
     <style>
     header[data-testid="stHeader"] { height: 0; min-height: 0; background: transparent; }
     .block-container,
-    [data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewBlockContainer"] {
+      padding-top: 0.5rem; padding-bottom: 0.25rem;
+    }
     [data-testid="stHeading"],
-    [data-testid="stHeading"] :is(h1, h2, h3) { margin-top: 0; }
+    [data-testid="stHeading"] :is(h1, h2, h3) {
+      margin: 0; padding: 0; line-height: 1.15;
+    }
+    [data-testid="stHorizontalBlock"] { align-items: flex-start; }
+    [data-testid="stHorizontalBlock"] [data-testid="stElementContainer"] { margin: 0; }
+    [data-testid="stVerticalBlock"] { gap: 0.35rem; }
     </style>
     """
 )
-title_col, summary_col = st.columns([3, 2], vertical_alignment="center")
+title_col, summary_col = st.columns([1.5, 1], vertical_alignment="top", gap="small")
 with title_col:
     st.subheader("Pro Dental Repair – Equipment in Repair")
 with summary_col:

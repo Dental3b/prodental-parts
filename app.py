@@ -9,6 +9,7 @@ import streamlit as st
 
 CSV = Path(__file__).with_name("parts.csv")
 COLUMNS = [
+    "VENDOR",
     "PART",
     "DESCRIP.",
     "JOB",

@@ -183,9 +183,6 @@ def table_html(frame: pd.DataFrame) -> str:
     )
 
 
-frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
-frame = frame.apply(lambda col: col.str.strip().replace("", "-"))
-
 st.html(
     """
     <style>
@@ -215,18 +212,26 @@ st.html(
     </style>
     """
 )
-title_col, summary_col = st.columns([1.5, 1], vertical_alignment="top", gap="small")
-with title_col:
-    st.subheader("Pro Dental Repair – Equipment in Repair")
-with summary_col:
-    st.html(summary_html(frame))
-query = st.text_input("Search", placeholder="Filter rows").strip()
-if query:
-    needle = query.lower()
-    frame = frame[
-        frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
-    ]
-frame = shop_order(frame)
 
-st.html(table_html(frame))
-st.caption(f"repairs.csv last updated {last_updated(CSV)}")
+
+@st.fragment(run_every=300)
+def show_repairs():
+    frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
+    frame = frame.apply(lambda col: col.str.strip().replace("", "-"))
+    title_col, summary_col = st.columns([1.5, 1], vertical_alignment="top", gap="small")
+    with title_col:
+        st.subheader("Pro Dental Repair – Equipment in Repair")
+    with summary_col:
+        st.html(summary_html(frame))
+    query = st.text_input("Search", placeholder="Filter rows").strip()
+    if query:
+        needle = query.lower()
+        frame = frame[
+            frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
+        ]
+    frame = shop_order(frame)
+    st.html(table_html(frame))
+    st.caption(f"repairs.csv last updated {last_updated(CSV)}")
+
+
+show_repairs()

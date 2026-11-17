@@ -66,6 +66,36 @@ def picked_label(picked: str, status: str, today) -> str:
     return f"{short}<br>{(today - start).days} días"
 
 
+def pickup_date(value: str):
+    text = str(value).strip()
+    if text in {"", "-"}:
+        return pd.NaT
+    try:
+        return pd.Timestamp(datetime.strptime(text, "%b %d, %Y"))
+    except ValueError:
+        return pd.NaT
+
+
+def shop_order(frame: pd.DataFrame) -> pd.DataFrame:
+    """Open jobs oldest-first, undated after those, returned jobs last."""
+    ranked = frame.copy()
+    ranked["_pickup"] = ranked["PICKED UP"].map(pickup_date)
+    returned = ranked["STATUS"].str.strip().str.upper().eq("RETURNED")
+
+    def ordered(part: pd.DataFrame, oldest_first: bool) -> pd.DataFrame:
+        dated = part.loc[part["_pickup"].notna()].sort_values(
+            "_pickup", ascending=oldest_first, kind="stable"
+        )
+        undated = part.loc[part["_pickup"].isna()]
+        return pd.concat([dated, undated])
+
+    ordered_rows = pd.concat([
+        ordered(ranked.loc[~returned], oldest_first=True),
+        ordered(ranked.loc[returned], oldest_first=False),
+    ])
+    return ordered_rows.drop(columns="_pickup")
+
+
 def table_html(frame: pd.DataFrame) -> str:
     columns = list(frame.columns)
     today = datetime.now(ZoneInfo("America/New_York")).date()
@@ -110,8 +140,7 @@ if query:
     frame = frame[
         frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
     ]
-returned = frame["STATUS"].str.strip().str.upper().eq("RETURNED")
-frame = pd.concat([frame.loc[~returned], frame.loc[returned]])
+frame = shop_order(frame)
 
 st.html(table_html(frame))
 st.caption(f"repairs.csv last updated {last_updated(CSV)}")

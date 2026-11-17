@@ -100,39 +100,34 @@ def summary_html(frame: pd.DataFrame) -> str:
     tech = pending["TECH"].str.strip().str.upper()
     loc = pending["LOCATION"].str.strip().str.upper()
 
-    def count(name: str, place: str | None) -> int:
-        rows = tech.eq(name)
-        if place is not None:
-            rows = rows & loc.eq(place)
-        return int(rows.sum())
+    def count(name: str, place: str) -> int:
+        return int((tech.eq(name) & loc.eq(place)).sum())
 
     head = "".join(
-        f'<th style="{TH}">{html.escape(col)}</th>' for col in ["TECH", *SUMMARY_COLS, "TOTAL"]
+        f'<th style="{TH}">{html.escape(col)}</th>' for col in ["", *TECHS, "TOTAL"]
     )
     body = []
-    totals = {place: 0 for place in SUMMARY_COLS}
-    for name in TECHS:
-        cells = [f'<td style="{TD.format(bg="#ffffff")}">{html.escape(name)}</td>']
+    by_tech = {name: 0 for name in TECHS}
+    for place in SUMMARY_COLS:
+        cells = [f'<td style="{TD.format(bg=LOCATION_BG[place])}"><b>{place}</b></td>']
         row_total = 0
-        for place in SUMMARY_COLS:
+        for name in TECHS:
             n = count(name, place)
-            totals[place] += n
+            by_tech[name] += n
             row_total += n
             cells.append(f'<td style="{TD.format(bg=LOCATION_BG[place])}">{n}</td>')
-        cells.append(f'<td style="{TD.format(bg="#ffffff")}">{row_total}</td>')
+        cells.append(f'<td style="{TD.format(bg=LOCATION_BG[place])}"><b>{row_total}</b></td>')
         body.append("<tr>" + "".join(cells) + "</tr>")
-    grand = sum(totals.values())
+    grand = sum(by_tech.values())
     foot = [f'<td style="{TD.format(bg="#f3f4f6")}"><b>TOTAL</b></td>']
-    foot += [
-        f'<td style="{TD.format(bg="#f3f4f6")}"><b>{totals[place]}</b></td>'
-        for place in SUMMARY_COLS
-    ]
+    foot += [f'<td style="{TD.format(bg="#f3f4f6")}"><b>{by_tech[name]}</b></td>' for name in TECHS]
     foot.append(f'<td style="{TD.format(bg="#f3f4f6")}"><b>{grand}</b></td>')
     body.append("<tr>" + "".join(foot) + "</tr>")
-    return (
-        '<table style="border-collapse:collapse;width:auto;font-size:13px;margin:0 0 0.75rem 0">'
+    table = (
+        '<table style="border-collapse:collapse;width:auto;font-size:13px;margin:0">'
         f"<thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
+    return f'<div style="display:flex;justify-content:flex-end">{table}</div>'
 
 
 def shop_order(frame: pd.DataFrame) -> pd.DataFrame:
@@ -194,8 +189,11 @@ st.html(
     </style>
     """
 )
-st.subheader("Pro Dental Repair – Equipment in Repair")
-st.html(summary_html(frame))
+title_col, summary_col = st.columns([3, 2], vertical_alignment="center")
+with title_col:
+    st.subheader("Pro Dental Repair – Equipment in Repair")
+with summary_col:
+    st.html(summary_html(frame))
 query = st.text_input("Search", placeholder="Filter rows").strip()
 if query:
     needle = query.lower()

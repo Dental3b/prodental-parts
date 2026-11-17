@@ -67,6 +67,16 @@ def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
 
 
+def customer_html(value: str) -> str:
+    parts = pieces(value)
+    if not parts:
+        return ""
+    name = (
+        f'<span style="font-size:0.8em;white-space:nowrap">{html.escape(parts[0])}</span>'
+    )
+    return name + "".join(f"<br>{html.escape(part)}" for part in parts[1:])
+
+
 def tracking_html(carrier: str, value: str) -> str:
     template = TRACK_URL.get(str(carrier).strip().upper())
     bits = []
@@ -95,7 +105,9 @@ def table_html(frame: pd.DataFrame) -> str:
                 body = html.escape(str(rec[col]))
             elif col == "TRACKING":
                 body = tracking_html(rec["CARRIER"], rec[col])
-            elif col in {"PART", "CUSTOMER"}:
+            elif col == "CUSTOMER":
+                body = customer_html(rec[col])
+            elif col == "PART":
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             else:
                 body = html.escape(str(rec[col]))
@@ -114,7 +126,17 @@ st.html(
     """
     <style>
     header[data-testid="stHeader"] { height: 0; min-height: 0; background: transparent; }
+    .stMain,
+    [data-testid="stMain"],
     .block-container,
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewBlockContainer"] {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      max-width: 100%;
+    }
+    .block-container,
+    [data-testid="stMainBlockContainer"],
     [data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
     [data-testid="stHeading"],
     [data-testid="stHeading"] :is(h1, h2, h3) { margin-top: 0; }

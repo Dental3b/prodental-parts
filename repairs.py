@@ -59,11 +59,11 @@ def picked_label(picked: str, status: str, today) -> str:
     try:
         start = datetime.strptime(text, "%b %d, %Y").date()
     except ValueError:
-        return text
-    short = f"{MONTHS[start.month - 1]} {start.day}"
+        return html.escape(text)
+    short = html.escape(f"{MONTHS[start.month - 1]} {start.day}")
     if str(status).strip().upper() == "RETURNED":
         return short
-    return f"{short} · {(today - start).days} días"
+    return f"{short}<br>{(today - start).days} días"
 
 
 def table_html(frame: pd.DataFrame) -> str:
@@ -78,7 +78,7 @@ def table_html(frame: pd.DataFrame) -> str:
             if col == "STATUS":
                 bg = STATUS_BG.get(str(rec[col]).strip().upper(), "#ffffff")
             if col == "PICKED UP":
-                body = html.escape(picked_label(rec[col], rec.get("STATUS", ""), today))
+                body = picked_label(rec[col], rec.get("STATUS", ""), today)
             else:
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             cells.append(f'<td style="{TD.format(bg=bg)}">{body}</td>')

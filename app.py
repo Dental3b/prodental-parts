@@ -95,7 +95,7 @@ def table_html(frame: pd.DataFrame) -> str:
                 body = html.escape(str(rec[col]))
             elif col == "TRACKING":
                 body = tracking_html(rec["CARRIER"], rec[col])
-            elif col == "PART":
+            elif col in {"PART", "CUSTOMER"}:
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             else:
                 body = html.escape(str(rec[col]))

@@ -22,14 +22,14 @@ TH = (
 )
 TD = (
     "text-align:center;border:1px solid #000;padding:2px 4px;line-height:1.15;"
-    "vertical-align:middle;color:#111;background:{bg};font-size:12px"
+    "vertical-align:middle;color:#111;background:{bg};font-size:12px;font-weight:700"
 )
 SUM_TH = (
     "background:#fff;color:#111;font-weight:700;text-align:center;"
     "border:1px solid #ccc;padding:0 4px;line-height:1.1;font-size:10px"
 )
 SUM_TD = (
-    "text-align:center;background:#fff;color:#111;"
+    "text-align:center;background:#fff;color:#111;font-weight:700;"
     "border:1px solid #ccc;padding:0 4px;line-height:1.1;font-size:10px"
 )
 
@@ -190,6 +190,7 @@ st.html(
     """
     <style>
     header[data-testid="stHeader"] { height: 0; min-height: 0; background: transparent; }
+    table th, table td, table th *, table td * { font-weight: 700; }
     .stMain,
     [data-testid="stMain"],
     .block-container,

@@ -2,6 +2,7 @@ import html
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
@@ -11,9 +12,10 @@ STATUS_BG = {
     "RECEIVED": "#ffffff",
     "IN REPAIR": "#fff3b0",
     "WAITING PARTS": "#fb923c",
-    "READY": "#22c55e",
-    "RETURNED": "#d1d5db",
+    "READY": "#93c5fd",
+    "RETURNED": "#22c55e",
 }
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 TH = (
     "background:#000;color:#fff;font-weight:700;text-align:center;"
     "border:1px solid #000;padding:6px 8px"
@@ -50,8 +52,23 @@ def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
 
 
+def picked_label(picked: str, status: str, today) -> str:
+    text = str(picked).strip()
+    if text in {"", "-"}:
+        return "-"
+    try:
+        start = datetime.strptime(text, "%b %d, %Y").date()
+    except ValueError:
+        return text
+    short = f"{MONTHS[start.month - 1]} {start.day}"
+    if str(status).strip().upper() == "RETURNED":
+        return short
+    return f"{short} · {(today - start).days} días"
+
+
 def table_html(frame: pd.DataFrame) -> str:
     columns = list(frame.columns)
+    today = datetime.now(ZoneInfo("America/New_York")).date()
     head = "".join(f'<th style="{TH}">{html.escape(col)}</th>' for col in columns)
     rows = []
     for rec in frame.to_dict("records"):
@@ -60,7 +77,10 @@ def table_html(frame: pd.DataFrame) -> str:
             bg = "#ffffff"
             if col == "STATUS":
                 bg = STATUS_BG.get(str(rec[col]).strip().upper(), "#ffffff")
-            body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
+            if col == "PICKED UP":
+                body = html.escape(picked_label(rec[col], rec.get("STATUS", ""), today))
+            else:
+                body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             cells.append(f'<td style="{TD.format(bg=bg)}">{body}</td>')
         rows.append("<tr>" + "".join(cells) + "</tr>")
     return (

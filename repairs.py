@@ -122,7 +122,10 @@ def summary_html(frame: pd.DataFrame) -> str:
         '<table style="border-collapse:collapse;width:auto;margin:0">'
         f"<thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>"
     )
-    return f'<div style="display:flex;justify-content:flex-end">{table}</div>'
+    return (
+        '<div style="display:flex;justify-content:flex-end;margin-top:0.85rem;margin-bottom:-0.85rem">'
+        f"{table}</div>"
+    )
 
 
 def shop_order(frame: pd.DataFrame) -> pd.DataFrame:

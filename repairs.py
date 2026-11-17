@@ -16,6 +16,10 @@ STATUS_BG = {
     "RETURNED": "#22c55e",
 }
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+LOCATION_BG = {
+    "SHOP": "#e5e7eb",
+    "SENT": "#fed7aa",
+}
 TH = (
     "background:#000;color:#fff;font-weight:700;text-align:center;"
     "border:1px solid #000;padding:6px 8px"
@@ -52,6 +56,17 @@ def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
 
 
+def location_html(value: str) -> str:
+    label = str(value).strip()
+    bg = LOCATION_BG.get(label.upper())
+    if not bg:
+        return html.escape(label)
+    return (
+        f'<span style="display:inline-block;background:{bg};color:#111;'
+        f'padding:1px 8px;border-radius:999px;font-weight:600">{html.escape(label)}</span>'
+    )
+
+
 def picked_label(picked: str, status: str, today) -> str:
     text = str(picked).strip()
     if text in {"", "-"}:
@@ -74,6 +89,50 @@ def pickup_date(value: str):
         return pd.Timestamp(datetime.strptime(text, "%b %d, %Y"))
     except ValueError:
         return pd.NaT
+
+
+TECHS = ["DANIEL", "ELOY", "JOSE"]
+SUMMARY_COLS = ["SHOP", "SENT"]
+
+
+def summary_html(frame: pd.DataFrame) -> str:
+    pending = frame[frame["STATUS"].str.strip().str.upper() != "RETURNED"]
+    tech = pending["TECH"].str.strip().str.upper()
+    loc = pending["LOCATION"].str.strip().str.upper()
+
+    def count(name: str, place: str | None) -> int:
+        rows = tech.eq(name)
+        if place is not None:
+            rows = rows & loc.eq(place)
+        return int(rows.sum())
+
+    head = "".join(
+        f'<th style="{TH}">{html.escape(col)}</th>' for col in ["TECH", *SUMMARY_COLS, "TOTAL"]
+    )
+    body = []
+    totals = {place: 0 for place in SUMMARY_COLS}
+    for name in TECHS:
+        cells = [f'<td style="{TD.format(bg="#ffffff")}">{html.escape(name)}</td>']
+        row_total = 0
+        for place in SUMMARY_COLS:
+            n = count(name, place)
+            totals[place] += n
+            row_total += n
+            cells.append(f'<td style="{TD.format(bg=LOCATION_BG[place])}">{n}</td>')
+        cells.append(f'<td style="{TD.format(bg="#ffffff")}">{row_total}</td>')
+        body.append("<tr>" + "".join(cells) + "</tr>")
+    grand = sum(totals.values())
+    foot = [f'<td style="{TD.format(bg="#f3f4f6")}"><b>TOTAL</b></td>']
+    foot += [
+        f'<td style="{TD.format(bg="#f3f4f6")}"><b>{totals[place]}</b></td>'
+        for place in SUMMARY_COLS
+    ]
+    foot.append(f'<td style="{TD.format(bg="#f3f4f6")}"><b>{grand}</b></td>')
+    body.append("<tr>" + "".join(foot) + "</tr>")
+    return (
+        '<table style="border-collapse:collapse;width:auto;font-size:13px;margin:0 0 0.75rem 0">'
+        f"<thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>"
+    )
 
 
 def shop_order(frame: pd.DataFrame) -> pd.DataFrame:
@@ -109,6 +168,8 @@ def table_html(frame: pd.DataFrame) -> str:
                 bg = STATUS_BG.get(str(rec[col]).strip().upper(), "#ffffff")
             if col == "PICKED UP":
                 body = picked_label(rec[col], rec.get("STATUS", ""), today)
+            elif col == "LOCATION":
+                body = location_html(rec[col])
             else:
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             cells.append(f'<td style="{TD.format(bg=bg)}">{body}</td>')
@@ -134,6 +195,7 @@ st.html(
     """
 )
 st.subheader("Pro Dental Repair – Equipment in Repair")
+st.html(summary_html(frame))
 query = st.text_input("Search", placeholder="Filter rows").strip()
 if query:
     needle = query.lower()

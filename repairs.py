@@ -60,6 +60,16 @@ def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
 
 
+def customer_html(value: str) -> str:
+    parts = pieces(value)
+    if not parts:
+        return ""
+    name = (
+        f'<span style="font-size:0.8em;white-space:nowrap">{html.escape(parts[0])}</span>'
+    )
+    return name + "".join(f"<br>{html.escape(part)}" for part in parts[1:])
+
+
 def picked_label(picked: str, status: str, today) -> str:
     text = str(picked).strip()
     if text in {"", "-"}:
@@ -161,6 +171,8 @@ def table_html(frame: pd.DataFrame) -> str:
                 bg = STATUS_BG.get(str(rec[col]).strip().upper(), "#ffffff")
             if col == "PICKED UP":
                 body = picked_label(rec[col], rec.get("STATUS", ""), today)
+            elif col == "CUSTOMER":
+                body = customer_html(rec[col])
             else:
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             cells.append(f'<td style="{TD.format(bg=bg)}">{body}</td>')
@@ -178,6 +190,15 @@ st.html(
     """
     <style>
     header[data-testid="stHeader"] { height: 0; min-height: 0; background: transparent; }
+    .stMain,
+    [data-testid="stMain"],
+    .block-container,
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewBlockContainer"] {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      max-width: 100%;
+    }
     .block-container,
     [data-testid="stMainBlockContainer"],
     [data-testid="stAppViewBlockContainer"] {

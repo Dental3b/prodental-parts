@@ -90,6 +90,8 @@ if query:
     frame = frame[
         frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
     ]
+returned = frame["STATUS"].str.strip().str.upper().eq("RETURNED")
+frame = pd.concat([frame.loc[~returned], frame.loc[returned]])
 
 st.html(table_html(frame))
 st.caption(f"repairs.csv last updated {last_updated(CSV)}")

@@ -128,6 +128,8 @@ if query:
     frame = frame[
         frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
     ]
+delivered = frame["STATUS"].str.strip().str.upper().eq("DELIVERED")
+frame = pd.concat([frame.loc[~delivered], frame.loc[delivered]])
 
 st.html(table_html(frame))
 st.caption(f"parts.csv last updated {last_updated(CSV)}")

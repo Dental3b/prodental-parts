@@ -9,6 +9,7 @@ import streamlit as st
 
 CSV = Path(__file__).with_name("parts.csv")
 COLUMNS = [
+    "TECH",
     "VENDOR",
     "PART",
     "DESCRIP.",
@@ -40,6 +41,16 @@ TD = (
     "text-align:center;border:1px solid #000;padding:6px 8px;"
     "vertical-align:middle;color:#111;background:{bg};font-weight:700"
 )
+SUM_TH = (
+    "background:#fff;color:#111;font-weight:700;text-align:center;"
+    "border:1px solid #ccc;padding:0 4px;line-height:1.1;font-size:10px"
+)
+SUM_TD = (
+    "text-align:center;background:#fff;color:#111;font-weight:700;"
+    "border:1px solid #ccc;padding:0 4px;line-height:1.1;font-size:10px"
+)
+TECHS = ["DANIEL", "ELOY", "JOSE"]
+SUMMARY_ROWS = ["TO ORDER", "ORDERED", "SHIPPED"]
 
 st.set_page_config(
     page_title="Pro Dental Repair – Parts",
@@ -94,6 +105,29 @@ def tracking_html(carrier: str, value: str) -> str:
     return "<br>".join(bits)
 
 
+def summary_html(frame: pd.DataFrame) -> str:
+    tech = frame["TECH"].str.strip().str.upper()
+    status = frame["STATUS"].str.strip().str.upper()
+
+    def count(name: str, state: str) -> int:
+        return int((tech.eq(name) & status.eq(state)).sum())
+
+    head = "".join(f'<th style="{SUM_TH}">{html.escape(col)}</th>' for col in ["", *TECHS])
+    body = []
+    for state in SUMMARY_ROWS:
+        cells = [f'<td style="{SUM_TD}">{html.escape(state)}</td>']
+        cells += [f'<td style="{SUM_TD}">{count(name, state)}</td>' for name in TECHS]
+        body.append("<tr>" + "".join(cells) + "</tr>")
+    table = (
+        '<table style="border-collapse:collapse;width:auto;margin:0">'
+        f"<thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>"
+    )
+    return (
+        '<div style="display:flex;justify-content:flex-end;margin-top:0.85rem;margin-bottom:-0.85rem">'
+        f"{table}</div>"
+    )
+
+
 def table_html(frame: pd.DataFrame) -> str:
     head = "".join(f'<th style="{TH}">{html.escape(col)}</th>' for col in COLUMNS)
     rows = []
@@ -139,6 +173,8 @@ st.html(
     [data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
     [data-testid="stHeading"],
     [data-testid="stHeading"] :is(h1, h2, h3) { margin-top: 0; }
+    [data-testid="stHorizontalBlock"] { align-items: flex-start; }
+    [data-testid="stHorizontalBlock"] [data-testid="stElementContainer"] { margin: 0; }
     </style>
     """
 )
@@ -148,7 +184,11 @@ st.html(
 def show_parts():
     frame = pd.read_csv(CSV, dtype=str, keep_default_na=False, encoding="utf-8")
     frame = frame[COLUMNS].apply(lambda col: col.str.strip().replace("", "-"))
-    st.subheader("Pro Dental Repair – Parts")
+    title_col, summary_col = st.columns([1.5, 1], vertical_alignment="top", gap="small")
+    with title_col:
+        st.subheader("Pro Dental Repair – Parts")
+    with summary_col:
+        st.html(summary_html(frame))
     query = st.text_input("Search", placeholder="Filter rows").strip()
     if query:
         needle = query.lower()

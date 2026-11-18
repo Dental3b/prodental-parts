@@ -21,6 +21,7 @@ COLUMNS = [
     "STATUS",
 ]
 STATUS_BG = {
+    "TO ORDER": "#ef4444",
     "ORDERED": "#ffffff",
     "SHIPPED": "#fff3b0",
     "DELIVERED": "#22c55e",
@@ -154,8 +155,14 @@ def show_parts():
         frame = frame[
             frame.apply(lambda row: needle in " ".join(row.astype(str)).lower(), axis=1)
         ]
-    delivered = frame["STATUS"].str.strip().str.upper().eq("DELIVERED")
-    frame = pd.concat([frame.loc[~delivered], frame.loc[delivered]])
+    status = frame["STATUS"].str.strip().str.upper()
+    to_order = status.eq("TO ORDER")
+    delivered = status.eq("DELIVERED")
+    frame = pd.concat([
+        frame.loc[to_order],
+        frame.loc[~to_order & ~delivered],
+        frame.loc[delivered],
+    ])
     st.html(table_html(frame))
     st.caption(f"parts.csv last updated {last_updated(CSV)}")
 

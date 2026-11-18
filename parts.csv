@@ -1,7 +1,7 @@
-VENDOR,PART,DESCRIP.,JOB,CUSTOMER,ADDRESS,CARRIER,TRACKING,ETA,STATUS
-DHP,580-MID015287800,Serenescape Hand Control,2901,MINT / Decatur Ortho,3546 Covington Highway Ortho Decatur,UPS,1Z54224X0340095746,-,SHIPPED
-True Spin,X12138 / X7808,Kavo LUX 2 2307 LN,2876,REVIVE DENTAL,4000 Old Milton Parkway Alpharetta,USPS,9305510615100000174925,"Nov 16, 2026",DELIVERED
-DHP,580-MID015358900,PCB Assembly Sterilizer Display,2883,MINT / College Park,3841 Main Street College Park,UPS,1Z54224X0342919718,-,SHIPPED
-DCI,7116 × 9,X-Ray Exposure Switch Kit,2867,LUIS CAMPOS,4047 Holcomb Bridge Road Peachtree Corners,UPS,1ZJ67Y550237427445,-,SHIPPED
-OWANDY,-,Sensor size 1.5 × 10,2867,LUIS CAMPOS,4047 Holcomb Bridge Road Peachtree Corners,FedEx,-,-,ORDERED
-Amazon,111-1390664-0318643 (Amazon order #),ESOW Water Filter Faucet (water key),2908,MINT / College Park,3841 Main Street College Park,Amazon,-,"Nov 17, 2026",ORDERED
+TECH,VENDOR,PART,DESCRIP.,JOB,CUSTOMER,ADDRESS,CARRIER,TRACKING,ETA,STATUS
+-,DHP,580-MID015287800,Serenescape Hand Control,2901,MINT / Decatur Ortho,3546 Covington Highway Ortho Decatur,UPS,1Z54224X0340095746,-,SHIPPED
+ELOY,True Spin,X12138 / X7808,Kavo LUX 2 2307 LN,2876,REVIVE DENTAL,4000 Old Milton Parkway Alpharetta,USPS,9305510615100000174925,"Nov 16, 2026",DELIVERED
+ELOY,DHP,580-MID015358900,PCB Assembly Sterilizer Display,2883,MINT / College Park,3841 Main Street College Park,UPS,1Z54224X0342919718,-,SHIPPED
+-,DCI,7116 × 9,X-Ray Exposure Switch Kit,2867,LUIS CAMPOS,4047 Holcomb Bridge Road Peachtree Corners,UPS,1ZJ67Y550237427445,-,SHIPPED
+-,OWANDY,-,Sensor size 1.5 × 10,2867,LUIS CAMPOS,4047 Holcomb Bridge Road Peachtree Corners,FedEx,-,-,ORDERED
+-,Amazon,111-1390664-0318643 (Amazon order #),ESOW Water Filter Faucet (water key),2908,MINT / College Park,3841 Main Street College Park,Amazon,-,"Nov 17, 2026",ORDERED

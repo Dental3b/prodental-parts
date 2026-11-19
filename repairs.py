@@ -1,7 +1,9 @@
 import html
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -16,6 +18,8 @@ STATUS_BG = {
     "RETURNED": "#22c55e",
 }
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+UPS_TRACK = "https://www.ups.com/track?tracknum={}"
+UPS_NUMBER = re.compile(r"1Z[0-9A-Z]+", re.IGNORECASE)
 TH = (
     "background:#000;color:#fff;font-weight:700;text-align:center;"
     "border:1px solid #000;padding:2px 4px;line-height:1.15;font-size:12px"
@@ -58,6 +62,30 @@ def last_updated(path: Path) -> str:
 
 def pieces(value: str) -> list[str]:
     return [part.strip() for part in str(value).split(" / ")]
+
+
+def tracking_html(value: str) -> str:
+    text = str(value).strip()
+    if text in {"", "-"}:
+        return "-"
+    lines = []
+    for part in pieces(text):
+        if part in {"", "-"}:
+            lines.append("-")
+            continue
+        chunks = []
+        cursor = 0
+        for match in UPS_NUMBER.finditer(part):
+            chunks.append(html.escape(part[cursor:match.start()]))
+            number = match.group(0)
+            href = UPS_TRACK.format(quote(number, safe=""))
+            chunks.append(f'<a href="{href}" target="_blank">{html.escape(number)}</a>')
+            cursor = match.end()
+        chunks.append(html.escape(part[cursor:]))
+        lines.append(
+            f'<span style="font-size:0.8em;white-space:nowrap">{"".join(chunks)}</span>'
+        )
+    return "<br>".join(lines)
 
 
 def customer_html(value: str) -> str:
@@ -173,6 +201,8 @@ def table_html(frame: pd.DataFrame) -> str:
                 body = picked_label(rec[col], rec.get("STATUS", ""), today)
             elif col == "CUSTOMER":
                 body = customer_html(rec[col])
+            elif col == "TRACKING":
+                body = tracking_html(rec[col])
             else:
                 body = "<br>".join(html.escape(part) for part in pieces(rec[col]))
             cells.append(f'<td style="{TD.format(bg=bg)}">{body}</td>')

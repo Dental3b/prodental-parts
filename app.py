@@ -90,11 +90,17 @@ def customer_html(value: str) -> str:
 
 
 def tracking_html(carrier: str, value: str) -> str:
-    template = TRACK_URL.get(str(carrier).strip().upper())
+    carrier_name = str(carrier).strip()
+    template = TRACK_URL.get(carrier_name.upper())
     bits = []
     for number in pieces(value):
         if not number or number == "-":
             bits.append("-")
+            continue
+        # AliExpress orders are stored as the full order URL, not a tracking number.
+        if carrier_name.upper() == "ALIEXPRESS" and number.startswith(("http://", "https://")):
+            href = html.escape(number, quote=True)
+            bits.append(f'<a href="{href}" target="_blank">AliExpress order</a>')
             continue
         label = html.escape(number)
         if template:
